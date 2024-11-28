@@ -1,0 +1,5 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_product_price_list_upload,product.price.list.upload,model_product_price_list_upload,,1,1,1,1
+access_bulk_item_upload,bulk.item.upload,model_bulk_item_upload,,1,1,1,1
+
+

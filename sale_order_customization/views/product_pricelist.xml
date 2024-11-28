@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record model="ir.ui.view" id="product_pricelist_view_search">
+        <field name="name">product.pricelist.inherited.upload</field>
+        <field name="model">product.pricelist</field>
+        <field name="inherit_id" ref="product.product_pricelist_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='company_id']" position="after">
+                 <field name="is_bulk_upload" invisible="1"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record model="ir.ui.view" id="product_pricelist_item_form_product_inherited_bulk">
+        <field name="name">product.pricelist.item.tree.inherited.upload</field>
+        <field name="model">product.pricelist.item</field>
+        <field name="inherit_id" ref="product.product_pricelist_item_tree_view_from_product"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='name']" position="after">
+                 <field name="class_price_list" invisible="1"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>
