@@ -21,7 +21,7 @@
 
 {
     'name': 'Sale customization',
-    'version': '16.0.1.0.0',
+    'version': '16.0.0.0.1',
     'category': 'Sales/CRM',
     'summary': 'Sale Customization',
     'description': 'Sale customisation',
