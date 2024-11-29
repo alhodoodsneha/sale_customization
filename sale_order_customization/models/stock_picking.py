@@ -26,8 +26,9 @@ from odoo.exceptions import UserError
 class StockPicking(models.Model):
     _inherit = "stock.picking"
 
+    credit_note = fields.Many2one('account.move',string='Credit Note')
+
     def button_validate(self):
-        res = super(StockPicking, self).button_validate()
         for rec in self:
             is_return = any(
                 move.origin_returned_move_id for move in rec.move_ids
@@ -40,27 +41,31 @@ class StockPicking(models.Model):
                             invoice_id = invoice
                     if invoice_id:
                         if invoice_id.state == 'posted':
-                            credit_note_vals = {
-                                'move_type': 'out_refund',
-                                'partner_id': rec.sale_id.partner_id.id,
-                                'invoice_origin': rec.sale_id.name,
-                                'reversed_entry_id': invoice.id,
-                                'ref': _("Return for %s") % invoice.name,
-                                'invoice_line_ids': [],
-                            }
-                            for line in rec.move_ids_without_package:
-                                inv_line_id = False
-                                for inv_line in invoice_id.invoice_line_ids:
-                                    if inv_line.product_id.id == line.product_id.id:
-                                        inv_line_id = inv_line
-                                credit_note_vals['invoice_line_ids'].append(
-                                    (0, 0, {
-                                        'product_id': line.product_id.id,
-                                        'quantity': line.quantity_done,
-                                        'price_unit': inv_line_id.price_unit if inv_line_id else False,
-                                        'tax_ids': [(6, 0,
-                                                     inv_line_id.tax_ids.ids)] if inv_line_id and inv_line_id.tax_ids else False,
-                                    })
-                                )
-                            credit_note = self.env['account.move'].create(credit_note_vals)
-        return res
+                            if all(line.quantity_done > 0 for line in rec.move_ids_without_package) and not rec.credit_note:
+                                credit_note_vals = {
+                                    'move_type': 'out_refund',
+                                    'partner_id': rec.sale_id.partner_id.id,
+                                    'invoice_origin': rec.sale_id.name,
+                                    'reversed_entry_id': invoice.id,
+                                    'ref': _("Return for %s") % invoice.name,
+                                    'invoice_line_ids': [],
+                                }
+                                for line in rec.move_ids_without_package:
+                                    inv_line_id = False
+                                    for inv_line in invoice_id.invoice_line_ids:
+                                        if inv_line.product_id.id == line.product_id.id:
+                                            inv_line_id = inv_line
+                                    credit_note_vals['invoice_line_ids'].append(
+                                        (0, 0, {
+                                            'product_id': line.product_id.id,
+                                            'quantity': line.quantity_done,
+                                            'price_unit': inv_line_id.price_unit if inv_line_id else False,
+                                            'tax_ids': [(6, 0,
+                                                         inv_line_id.tax_ids.ids)] if inv_line_id and inv_line_id.tax_ids else False,
+                                            'sale_line_ids': [(6, 0,
+                                                               inv_line_id.sale_line_ids.ids)] if inv_line_id and inv_line_id.sale_line_ids else False,
+                                        })
+                                    )
+                                credit_note = self.env['account.move'].create(credit_note_vals)
+                                rec.credit_note = credit_note
+        return super(StockPicking, self).button_validate()

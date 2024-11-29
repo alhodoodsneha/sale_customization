@@ -8,6 +8,40 @@
             <xpath expr="//button[@name='action_draft']" position="after">
                 <button name="action_bulk_upload_item" type="object" string="Bulk Item" class="oe_highlight"/>
             </xpath>
+            <xpath expr="//label[@for='qty_invoiced']" position="before">
+                <label for="qty_returned" string="Returned"
+                       attrs="{'invisible': [('parent.state', 'not in', ['sale', 'done'])]}"/>
+                <div name="returned_qty" attrs="{'invisible': [('parent.state', 'not in', ['sale', 'done'])]}">
+                    <field name="qty_returned" attrs="{'readonly': [('qty_delivered_method', '!=', 'manual')]}"/>
+                </div>
+            </xpath>
+
+            <xpath expr="//label[@for='qty_invoiced']" position="after">
+                <label for="qty_credited" string="Credited"
+                       attrs="{'invisible': [('parent.state', 'not in', ['sale', 'done'])]}"/>
+                <div name="credited_qty" attrs="{'invisible': [('parent.state', 'not in', ['sale', 'done'])]}">
+                    <field name="qty_credited" attrs="{'readonly': [('qty_delivered_method', '!=', 'manual')]}"/>
+                </div>
+            </xpath>
+
+            <xpath expr="//tree/field[@name='qty_delivered']" position="after">
+                <field
+                        name="qty_returned"
+                        string="Returned"
+                        attrs="{'column_invisible': [('parent.state', 'not in', ['sale', 'done'])],
+                                 'readonly': [('qty_delivered_method', '!=', 'manual')]
+                                }"
+                        optional="show"
+                />
+            </xpath>
+            <xpath expr="//tree/field[@name='qty_invoiced']" position="after">
+                <field
+                        name="qty_credited"
+                        string="Credited"
+                        attrs="{'column_invisible': [('parent.state', 'not in', ['sale', 'done'])]}"
+                        optional="show"
+                />
+            </xpath>
         </field>
     </record>
 </odoo>

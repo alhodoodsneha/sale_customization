@@ -19,28 +19,18 @@
 #
 #############################################################################
 
-{
-    'name': 'Sale customization',
-    'version': '16.0.0.0.3',
-    'category': 'Sales/CRM',
-    'summary': 'Sale Customization',
-    'description': 'Sale customisation',
-    'author': 'Alhodood Technologies',
-    'depends': [
-        'sale_management', 'product','stock'
-    ],
-    'data': [
-        'security/ir.model.access.csv',
-        'views/product_pricelist.xml',
-        'views/sale_order.xml',
-        'views/stock_picking.xml',
-        'views/stock_picking_return.xml',
-        'wizard/price_list_upload.xml',
-        'wizard/bulk_item_upload.xml',
-    ],
-    'assets': {},
-    'license': 'LGPL-3',
-    'installable': True,
-    'auto_install': False,
-    'application': False,
-}
+
+from odoo import api, fields, models
+
+
+class SaleReport(models.Model):
+    _inherit = "sale.report"
+
+    qty_returned = fields.Float('Qty Returned', readonly=True)
+    qty_credited = fields.Float('Qty Credited', readonly=True)
+
+    def _select_additional_fields(self):
+        res = super()._select_additional_fields()
+        res['qty_returned'] = "CASE WHEN l.product_id IS NOT NULL THEN SUM(l.qty_returned / u.factor * u2.factor) ELSE 0 END"
+        res['qty_credited'] = "CASE WHEN l.product_id IS NOT NULL THEN SUM(l.qty_credited / u.factor * u2.factor) ELSE 0 END"
+        return res

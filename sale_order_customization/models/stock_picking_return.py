@@ -32,15 +32,31 @@ class StockReturnPickingLine(models.TransientModel):
 class ReturnPicking(models.TransientModel):
     _inherit = 'stock.return.picking'
 
-    def _create_returns(self):
-        # TODO sle: the unreserve of the next moves could be less brutal
-        new_picking_id, pick_type_id = super(ReturnPicking, self)._create_returns()
-        new_picking = self.env['stock.picking'].browse([new_picking_id])
-        for move in new_picking.move_ids:
-            return_picking_line = self.product_return_moves.filtered(
-                lambda r: r.move_id == move.origin_returned_move_id)[:1]
-            if return_picking_line and not return_picking_line.return_product:
-                move.state = 'draft'
-                move.unlink()
-        return new_picking_id, pick_type_id
+    def create_returns(self):
+        for wizard in self:
+            moves = wizard.product_return_moves
+            for moves in wizard.product_return_moves:
+                if not moves.return_product:
+                    moves.unlink()
+            new_picking_id, pick_type_id = wizard._create_returns()
+        # Override the context to disable all the potential filters that could have been set previously
+        ctx = dict(self.env.context)
+        ctx.update({
+            'default_partner_id': self.picking_id.partner_id.id,
+            'search_default_picking_type_id': pick_type_id,
+            'search_default_draft': False,
+            'search_default_assigned': False,
+            'search_default_confirmed': False,
+            'search_default_ready': False,
+            'search_default_planning_issues': False,
+            'search_default_available': False,
+        })
+        return {
+            'name': _('Returned Picking'),
+            'view_mode': 'form,tree,calendar',
+            'res_model': 'stock.picking',
+            'res_id': new_picking_id,
+            'type': 'ir.actions.act_window',
+            'context': ctx,
+        }
 
