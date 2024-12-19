@@ -40,11 +40,11 @@ class BulkItemUpload(models.TransientModel):
         workbook = xlrd.open_workbook(file_contents=file_data)
         sheet = workbook.sheet_by_index(0)
         for row_no in range(1, sheet.nrows):
-            barcode = str(sheet.cell(row_no, 0).value).strip()
-            qty = float(sheet.cell(row_no, 1).value)
-            product_id = self.env['product.product'].search([('barcode', '=', barcode)])
+            prod_sku = str(sheet.cell(row_no, 0).value).strip()
+            qty = float(sheet.cell(row_no, 2).value)
+            product_id = self.env['product.product'].search([('prod_sku', '=', prod_sku)])
             if not product_id:
-                raise UserError(_("Product With Barcode  %s Not Found", barcode))
+                raise UserError(_("Product With SKU Code  %s Not Found", prod_sku))
             else:
                 today = fields.Datetime.now()
                 price_list_item = self.env['product.pricelist.item'].search(

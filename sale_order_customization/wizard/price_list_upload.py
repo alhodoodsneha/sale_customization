@@ -22,15 +22,16 @@
 from odoo import fields, models, _
 from odoo.exceptions import UserError
 import base64
+import io
 import xlrd
 from datetime import datetime
-
+from odoo.tools.misc import xlsxwriter
 
 class ProductPriceListUpload(models.TransientModel):
     _name = 'product.price.list.upload'
     _description = "Product Price List Upload"
 
-    file = fields.Binary(string='Upload File', required=True)
+    file = fields.Binary(string='Upload File')
     filename = fields.Char(string='Filename')
 
     def action_process_file(self):
@@ -50,13 +51,13 @@ class ProductPriceListUpload(models.TransientModel):
                 'is_bulk_upload': True,
             })
         for row_no in range(1, sheet.nrows):
-            barcode = str(sheet.cell(row_no, 0).value).strip()
-            product_id = self.env['product.product'].search([('barcode', '=', barcode)])
+            prod_sku = str(sheet.cell(row_no, 0).value).strip()
+            product_id = self.env['product.product'].search([('prod_sku', '=', prod_sku)])
             if not product_id:
-                raise UserError(_("Product With Barcode  %s Not Found", barcode))
+                raise UserError(_("Product With SKU Code  %s Not Found", prod_sku))
             if len(product_id) > 1:
-                raise UserError(_("Multiple Product Found With Same Barcode %s !!", barcode))
-            price = float(sheet.cell(row_no, 1).value)
+                raise UserError(_("Multiple Product Found With Same SKU Code %s !!", prod_sku))
+            price = float(sheet.cell(row_no, 2).value)
             price_list_item = self.env['product.pricelist.item'].search(
                 [('pricelist_id', '=', pricelist.id), ('product_id', '=', product_id.id),('date_end','=',False)])
             if price_list_item:
@@ -70,3 +71,24 @@ class ProductPriceListUpload(models.TransientModel):
                 'fixed_price': price,
                 'date_start': today,
             })
+
+    def action_export_template(self):
+        output = io.BytesIO()
+        workbook = xlsxwriter.Workbook(output)
+        worksheet = workbook.add_worksheet('Import Price list')
+        headers = ['SKU Code', 'Barcode', 'Price']
+        for col, header in enumerate(headers):
+            worksheet.write(0, col, header)
+        workbook.close()
+        output.seek(0)
+        attachment = self.env['ir.attachment'].create({
+            'name': 'Import Price List.xlsx',
+            'type': 'binary',
+            'datas': base64.b64encode(output.read()),
+            'mimetype': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        })
+        return {
+            'type': 'ir.actions.act_url',
+            'url': '/web/content/%s?download=true' % attachment.id,
+            'target': 'self'
+        }

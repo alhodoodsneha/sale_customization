@@ -27,7 +27,7 @@
     'description': 'Sale customisation',
     'author': 'Alhodood Technologies',
     'depends': [
-        'sale_management', 'product','stock'
+        'sale_management', 'product','stock','optifashion_retails'
     ],
     'data': [
         'security/ir.model.access.csv',

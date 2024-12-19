@@ -6,7 +6,8 @@
         <field name="inherit_id" ref="sale.view_order_form"/>
         <field name="arch" type="xml">
             <xpath expr="//button[@name='action_draft']" position="after">
-                <button name="action_bulk_upload_item" type="object" string="Bulk Item" class="oe_highlight"/>
+                <button name="action_bulk_upload_item" type="object" string="Import Bulk Item" class="oe_highlight"/>
+                <button name="action_export_bulk_item" type="object" string="Export Template" class="btn btn-primary"/>
             </xpath>
             <xpath expr="//label[@for='qty_invoiced']" position="before">
                 <label for="qty_returned" string="Returned"

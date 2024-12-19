@@ -20,6 +20,9 @@
 #############################################################################
 
 from odoo import models, api, fields
+import base64
+import io
+from odoo.tools.misc import xlsxwriter
 
 
 class SaleOrder(models.Model):
@@ -36,4 +39,25 @@ class SaleOrder(models.Model):
             'context': {
                 'active_id': self.id,
             }
+        }
+
+    def action_export_bulk_item(self):
+        output = io.BytesIO()
+        workbook = xlsxwriter.Workbook(output)
+        worksheet = workbook.add_worksheet('Import Products')
+        headers = ['SKU Code', 'Barcode', 'Quantity']
+        for col, header in enumerate(headers):
+            worksheet.write(0, col, header)
+        workbook.close()
+        output.seek(0)
+        attachment = self.env['ir.attachment'].create({
+            'name': 'Import Products.xlsx',
+            'type': 'binary',
+            'datas': base64.b64encode(output.read()),
+            'mimetype': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        })
+        return {
+            'type': 'ir.actions.act_url',
+            'url': '/web/content/%s?download=true' % attachment.id,
+            'target': 'self'
         }
